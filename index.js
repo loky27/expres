@@ -26,33 +26,15 @@ http.createServer((request, response) => {
                 break;
         }
     }else if(request.method === "POST"){
-        let data = '';
+        switch(request.url){
+            case "/usuarios":
+                agregarUsuario(request);
+                break;
+            default:
+                readFile(request.url, response);
+                break;
+        }
 
-        //Cuando se estén recibiendo datos
-        request.on('data', chunk => {
-            data += chunk;
-        });
-        
-        //Cuando se terminen de procesar los datos
-        request.on('end', () => {
-            console.log(data.toString());
-            console.log("Fin del stream");
-            //fs.writeFile
-            //1° argumento -> la ruta del archivo en el que queremos escribir 
-            //Se creará el archivo si no existe en la ruta especificada 
-            //2° argumento -> El contenido que queremos escribir
-            //3° argumento -> función de callback que nos "notificará" en caso de que haya
-            // un error al escribir en el archivo
-            fs.writeFile("usuarios2.txt", "Hola mundo", (error) => {
-                if(error){
-                    console.log(error);
-                }
-            });
-        });
-
-        request.on('error', error => {
-            console.log(error);
-        })
     }
 }).listen(8080);
 
@@ -71,5 +53,42 @@ const readFile = (url, response) => {
             response.writeHead(404);
             response.end("<h1>404</h1>")
         }
+    })
+}
+
+const agregarUsuario = (request) => {
+    let data = '';
+
+    //Cuando se estén recibiendo datos
+    request.on('data', chunk => {
+        data += chunk;
+    });
+    
+    //Cuando se terminen de procesar los datos
+    request.on('end', () => {
+        let datos = data.toString();
+        console.log("Fin del stream");
+        //fs.writeFile
+        //1° argumento -> la ruta del archivo en el que queremos escribir 
+        //Se creará el archivo si no existe en la ruta especificada 
+        //2° argumento -> El contenido que queremos escribir
+        //3° argumento -> función de callback que nos "notificará" en caso de que haya
+        // un error al escribir en el archivo
+        console.log(datos.split("&"));
+        let user = {
+            name: datos.split("&")[0].split("=")[1],
+            lastname: datos.split("&")[1].split("=")[1],
+            email: datos.split("&")[2].split("=")[1],
+            password: datos.split("&")[3].split("=")[1]
+        }
+        fs.writeFile("usuarios2.txt", JSON.stringify(user), (error) => {
+            if(error){
+                console.log(error);
+            }
+        });
+    });
+
+    request.on('error', error => {
+        console.log(error);
     })
 }
